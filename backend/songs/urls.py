@@ -1,13 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import SongViewSet, ReviewViewSet, CommentViewSet, CustomSongViewSet
+from .views import SongViewSet, ReviewViewSet, CommentViewSet, CustomSongViewSet, spotify_callback
 
 router = DefaultRouter()
-router.register(r'songs', SongViewSet)
-router.register(r'reviews', ReviewViewSet)
-router.register(r'comments', CommentViewSet)
-router.register(r'customsongs', CustomSongViewSet)
+router.register(r'songs', SongViewSet, basename='songs')
+router.register(r'reviews', ReviewViewSet, basename='reviews')
+router.register(r'comments', CommentViewSet, basename='comments')   
+router.register(r'customsongs', CustomSongViewSet, basename='customsongs')  
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('spotify/callback/', spotify_callback),
+
 ]

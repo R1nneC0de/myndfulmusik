@@ -14,8 +14,9 @@ function Login({ onLoginSuccess }) {
         password: password,
       });
 
-      const access = response.data.access;
+      const { access, refresh } = response.data;
       localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
       onLoginSuccess(); // triggers showing SongList
     } catch (err) {
         console.error('Error:', err.response?.data);
