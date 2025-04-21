@@ -9,6 +9,7 @@ from .serializers import SongSerializer
 from .models import Song, Review, Comment, CustomSong
 from .serializers import ReviewSerializer, CommentSerializer, CustomSongSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
+import datetime
 
 class SongViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -31,6 +32,60 @@ class SongViewSet(viewsets.ViewSet):
                 for row in rows
             ]
         return Response(songs)
+    
+    def create(self, request):
+        data = request.data
+        title = data.get('title')
+        artist = data.get('artist')
+        album = data.get('album')
+        genre = data.get('genre')
+        release_date = data.get('release_date')
+        length = data.get('length')
+        length = f"{length} seconds"
+
+        with connection.cursor() as cursor:
+            # Check if the song already exists by title and artist
+            cursor.execute("""
+                SELECT id FROM songs_song WHERE title = %s AND artist = %s
+            """, [title, artist])
+            existing = cursor.fetchone()
+
+            if existing:
+                return Response({'id': existing[0]}, status=200)  # song already exists
+
+            # If not, insert the new song
+            cursor.execute("""
+                INSERT INTO songs_song (title, artist, album, genre, release_date, length)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, [title, artist, album, genre, release_date, length])
+            song_id = cursor.fetchone()[0]
+
+        return Response({'id': song_id}, status=201)
+    
+    def retrieve(self, request, pk=None):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, title, artist, album, genre, release_date, length
+                FROM songs_song WHERE id = %s
+            """, [pk])
+            row = cursor.fetchone()
+
+            if not row:
+                return Response({"error": "Song not found"}, status=404)
+
+            song = {
+                'id': row[0],
+                'title': row[1],
+                'artist': row[2],
+                'album': row[3],
+                'genre': row[4],
+                'release_date': row[5],
+                'length': row[6]
+            }
+        return Response(song)
+
+
 
 class ReviewViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -38,9 +93,10 @@ class ReviewViewSet(viewsets.ViewSet):
     def list(self, request):
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT r.id, r.rating, r.review_text, r.timestamp, r.song_id, r.user_id, u.username 
+                SELECT r.id, r.rating, r.review_text, r.timestamp, r.song_id, u.id, u.username, s.title
                 FROM songs_review r
                 JOIN users_customuser u ON r.user_id = u.id
+                JOIN songs_song s ON r.song_id = s.id
                 ORDER BY r.timestamp DESC
             """)
             rows = cursor.fetchall()
@@ -55,11 +111,13 @@ class ReviewViewSet(viewsets.ViewSet):
                     "user": {
                         "id": row[5],
                         "username": row[6]
-                    }
+                    },
+                    "song_title": row[7]
                 }
                 for row in rows
             ]
         return Response(reviews)
+
 
     def create(self, request):
         user_id = request.user.id
@@ -177,19 +235,42 @@ def spotify_callback(request):
     }
 
     response = requests.post('https://accounts.spotify.com/api/token', data=data)
-
     print('Spotify token response:', response.status_code, response.text)
 
     if response.status_code != 200:
-        return JsonResponse({
-            'error': 'Spotify token exchange failed',
-            'details': response.text
-        }, status=500)
+        return JsonResponse({'error': 'Spotify token exchange failed'}, status=500)
 
     token_info = response.json()
     return JsonResponse({
         'access_token': token_info.get('access_token'),
         'refresh_token': token_info.get('refresh_token'),
-        'expires_in': token_info.get('expires_in')
+        'expires_in': token_info.get('expires_in'),  # in seconds
     })
 
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def trending_songs(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT s.id, s.title, s.artist, COUNT(r.id) as review_count
+            FROM songs_song s
+            LEFT JOIN songs_review r ON s.id = r.song_id
+            GROUP BY s.id
+            ORDER BY review_count DESC
+            LIMIT 5
+        """)
+        rows = cursor.fetchall()
+        trending = [
+            {
+                "id": row[0],
+                "title": row[1],
+                "artist": row[2],
+                "review_count": row[3]
+            }
+            for row in rows
+        ]
+    return Response(trending)

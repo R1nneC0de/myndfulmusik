@@ -5,6 +5,11 @@ class SongSerializer(serializers.ModelSerializer):
     class Meta:
         model = Song
         fields = '__all__'
+        extra_kwargs = {
+            'genre': {'required': False},
+            'release_date': {'required': False},
+            'length': {'required': False},
+        }
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
