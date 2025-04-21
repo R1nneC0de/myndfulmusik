@@ -81,8 +81,9 @@ function SongList() {
       const tracks = response.data.items.map(item => item.track);
       setSpotifyResults(tracks);
     } catch (error) {
-      console.error("Error fetching trending tracks:", error);
-      alert("Unable to load trending songs. Try reconnecting Spotify.");
+      console.warn("Trending songs could not be loaded. Possibly due to invalid token or playlist.");
+setSpotifyResults([]); // fallback to empty list
+
     }
   };
   
@@ -155,44 +156,46 @@ function SongList() {
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Song List</h2>
-        <button
-          onClick={handleLogout}
-          style={{ padding: '6px 12px', backgroundColor: '#d9534f', color: 'white', border: 'none', borderRadius: '4px' }}
-        >
-          Logout
-        </button>
-
-        <Link to="/upload">
-  <button style={{ marginBottom: '1rem', backgroundColor: '#007bff', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px' }}>
-    ➕ Upload a Custom Song
-  </button>
-</Link>
-
+    <div style={{ backgroundColor: '#f5ebff', minHeight: '100vh', padding: '2rem' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1rem'
+      }}>
+        <h2 style={{ color: '#6b21a8' }}>🎶 MYndfulMusiK</h2>
+        <div>
+          <button
+            onClick={() => navigate('/profile')}
+            style={{ marginRight: '10px', backgroundColor: '#6b21a8', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px' }}
+          >
+            👤 My Profile
+          </button>
+          <button
+            onClick={() => navigate('/custom-upload')}
+            style={{ marginRight: '10px', backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px' }}
+          >
+            ➕ Upload a Custom Song
+          </button>
+          <button
+            onClick={handleLogout}
+            style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px' }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
-
-      <button
-  onClick={() => navigate('/profile')}
-  style={{ marginRight: '10px', background: '#007bff', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '4px' }}
->
-  My Profile
-</button>
-
   
       {!spotifyToken && (
         <div style={{ marginBottom: '1rem' }}>
           <a href="/connect">
-            <button
-              style={{
-                backgroundColor: '#1DB954',
-                color: 'white',
-                padding: '8px 16px',
-                border: 'none',
-                borderRadius: '4px'
-              }}
-            >
+            <button style={{
+              backgroundColor: '#1DB954',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px'
+            }}>
               Connect with Spotify
             </button>
           </a>
@@ -205,23 +208,39 @@ function SongList() {
           placeholder="Search Spotify songs..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
+          style={{ padding: '6px', width: '250px', marginRight: '8px' }}
         />
-        <button type="submit">Search</button>
+        <button type="submit" style={{
+          backgroundColor: '#6b21a8',
+          color: 'white',
+          border: 'none',
+          padding: '6px 12px',
+          borderRadius: '4px'
+        }}>
+          Search
+        </button>
       </form>
   
       {spotifyResults.length > 0 && (
         <div>
-          <h4>Spotify Songs</h4>
+          <h4 style={{ color: '#6b21a8' }}>🎧 Spotify Songs</h4>
           {spotifyResults.map(track => (
-            <div key={track.id} style={{ marginBottom: '1rem', padding: '0.5rem', border: '1px solid #ccc' }}>
+            <div key={track.id} style={{
+              marginBottom: '1rem',
+              padding: '0.5rem',
+              border: '1px solid #d8b4fe',
+              backgroundColor: '#f3e8ff',
+              borderRadius: '8px'
+            }}>
               <img src={track.album.images[0]?.url} alt="Album Art" width="50" style={{ marginRight: '1rem' }} />
               <strong>{track.name}</strong> by {track.artists.map(a => a.name).join(', ')}
+              <br />
   
               <button
                 onClick={() => handleSaveSpotifySong(track)}
                 style={{
                   marginTop: '0.5rem',
-                  background: '#1DB954',
+                  background: '#10b981',
                   color: 'white',
                   padding: '5px 10px',
                   border: 'none',
@@ -232,8 +251,10 @@ function SongList() {
               </button>
   
               {track.preview_url && (
-                <div>
-                  <audio controls src={track.preview_url}>Your browser does not support audio</audio>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <audio controls src={track.preview_url}>
+                    Your browser does not support audio
+                  </audio>
                 </div>
               )}
   
@@ -244,28 +265,30 @@ function SongList() {
                 frameBorder="0"
                 allow="encrypted-media"
                 title="Spotify Player"
+                style={{ marginTop: '0.5rem' }}
               ></iframe>
             </div>
           ))}
         </div>
       )}
   
-      {/* 👇 New section: All Songs */}
-      <div style={{ marginTop: '2rem' }}>
-        <h3>🎵 All Songs</h3>
-        {songs.length === 0 && <p>No songs available yet.</p>}
-        {songs.map(song => (
-          <div key={song.id} style={{ padding: '8px', borderBottom: '1px solid #ccc' }}>
-            <strong>{song.title}</strong> by {song.artist}
-            <br />
-            <a href={`/songs/${song.id}`}>
-              <button style={{ marginTop: '6px' }}>View Details</button>
-            </a>
-          </div>
-        ))}
-      </div>
+      {spotifyResults.length === 0 && (
+        <div style={{
+          marginTop: '2rem',
+          textAlign: 'center',
+          padding: '2rem',
+          backgroundColor: '#ede9fe',
+          borderRadius: '12px',
+          color: '#6b21a8'
+        }}>
+          <h3>🎵 All Songs</h3>
+          <p>No songs available yet.</p>
+          <p>Use the search bar above to find and review songs from Spotify!</p>
+        </div>
+      )}
     </div>
   );
+  
   
 }
 

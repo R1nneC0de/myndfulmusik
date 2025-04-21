@@ -7,6 +7,7 @@ import Callback from './components/Callback';
 import SongDetail from './components/SongDetail';
 import Profile from './components/Profile';
 import CustomUploadPage from './components/CustomUploadPage';
+import CustomSongUpload from './components/CustomSongUpload';
 
 
 
@@ -43,6 +44,7 @@ function App() {
   <Route path="*" element={<p>404 - Page Not Found</p>} />
   <Route path="/profile" element={<Profile />} />
   <Route path="/upload" element={<CustomUploadPage />} />
+  <Route path="/custom-upload" element={<CustomSongUpload />} />
 
 
 </Routes>

@@ -135,6 +135,24 @@ class ReviewViewSet(viewsets.ViewSet):
             """, [rating, review_text, song_id, user_id])
 
         return Response({"message": "Review submitted successfully"}, status=201)
+    
+    def destroy(self, request, pk=None):
+        user_id = request.user.id
+        with connection.cursor() as cursor:
+            # Ensure the review exists and belongs to the current user
+            cursor.execute("SELECT user_id FROM songs_review WHERE id = %s", [pk])
+            row = cursor.fetchone()
+
+            if not row:
+                return Response({"error": "Review not found"}, status=404)
+            if row[0] != user_id:
+                return Response({"error": "Unauthorized to delete this review"}, status=403)
+
+            # If valid, delete the review
+            cursor.execute("DELETE FROM songs_review WHERE id = %s", [pk])
+
+        return Response({"message": "Review deleted"}, status=204)
+
 
 
 class CommentViewSet(viewsets.ViewSet):

@@ -1,3 +1,4 @@
+// src/components/CustomSongUpload.js
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -24,7 +25,7 @@ function CustomSongUpload({ onUpload }) {
       setTitle('');
       setFile(null);
       setMessage('✅ Upload successful!');
-      onUpload(); // Optional: callback to refresh list
+      onUpload && onUpload();
     } catch (error) {
       console.error(error);
       setMessage('❌ Upload failed.');
@@ -32,23 +33,60 @@ function CustomSongUpload({ onUpload }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '2rem' }}>
-      <h3>Upload Your Custom Song</h3>
+    <form onSubmit={handleSubmit}>
+      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8' }}>Custom Song Title</label>
       <input
         type="text"
         value={title}
-        placeholder="Custom Song Title"
         onChange={(e) => setTitle(e.target.value)}
         required
-      /><br /><br />
+        style={{
+          padding: '0.6rem',
+          width: '100%',
+          marginBottom: '1.2rem',
+          border: '1px solid #c4b5fd',
+          borderRadius: '5px',
+          fontSize: '1rem'
+        }}
+      />
+
+      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8' }}>Audio File</label>
       <input
         type="file"
         accept="audio/*"
         onChange={(e) => setFile(e.target.files[0])}
         required
-      /><br /><br />
-      <button type="submit">Upload</button>
-      <p>{message}</p>
+        style={{
+          padding: '0.6rem',
+          width: '100%',
+          marginBottom: '1.5rem',
+          border: '1px solid #c4b5fd',
+          borderRadius: '5px',
+          fontSize: '1rem'
+        }}
+      />
+
+      <button
+        type="submit"
+        style={{
+          backgroundColor: '#7c3aed',
+          color: 'white',
+          border: 'none',
+          padding: '0.6rem 1.5rem',
+          borderRadius: '6px',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          cursor: 'pointer'
+        }}
+      >
+        Upload
+      </button>
+
+      {message && (
+        <p style={{ marginTop: '1rem', color: message.includes('✅') ? 'green' : 'red' }}>
+          {message}
+        </p>
+      )}
     </form>
   );
 }
